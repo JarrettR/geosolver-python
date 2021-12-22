@@ -11,7 +11,6 @@ __all__ = [
     "gmatch",
     "graph",
     "intersections",
-    "incremental",
     "map",
     "matfunc",
     "method",

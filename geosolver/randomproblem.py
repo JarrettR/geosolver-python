@@ -8,15 +8,15 @@ from .vector import vector
 from .tolerance import tol_eq
 
 def _constraint_group(problem, group, dependend, angleratio):
-    """Add constraints to problem to constrain given group of points.
+    """Add constraints to problem to constrain given group of points. 
        Group may be optionally dependend on pair of points.
        Creates angle constraints with a given chance."""
 
-    diag_print("_constraint_group(group="+str(group.keys())+",dep="+str(dependend)+")","geometric._constraint_group")
+    diag_print("_constraint_group(group="+str(list(group.keys()))+",dep="+str(dependend)+")","geometric._constraint_group")
     if len(group) == 2:
         if dependend == None:
-           v1 = group.keys()[0]
-           v2 = group.keys()[1]
+           v1 = list(group.keys())[0]
+           v2 = list(group.keys())[1]
            p1 = group[v1]
            p2 = group[v2]
            dist = distance_2p(p1,p2)
@@ -25,7 +25,7 @@ def _constraint_group(problem, group, dependend, angleratio):
            problem.add_constraint(con)
     elif len(group) >= 3:
         # pick three points
-        keys = group.keys()
+        keys = list(group.keys())
         if dependend == None:
             v1 = random.choice(keys)
         else:
@@ -122,7 +122,7 @@ def random_problem_2D(numpoints, radius=10.0, roundoff=0.0, angleratio=0.5):
 
 def add_random_constraint(problem, ratio):
     """add a random constraint to a problem, with a given ratio angles/distances"""
-    if random.random() < ratio:
+    if random.random() < ratio:   
         # add angle
         pointvars = list(problem.cg.variables())
         random.shuffle(pointvars)
@@ -162,7 +162,7 @@ def randomize_hedgehogs(problem):
        modifies problem
     """
     assert problem.dimension == 2
-    angles = filter(lambda c: isinstance(c, AngleConstraint), problem.cg.constraints())
+    angles = [c for c in problem.cg.constraints() if isinstance(c, AngleConstraint)]
     hogs = set()
     # make hogs from angles
     for angle in angles:
@@ -185,7 +185,7 @@ def randomize_hedgehogs(problem):
                 continue
             cvar2 = hog2[0]
             xvars2 = hog2[1]
-            if cvar1 == cvar2:
+            if cvar1 == cvar2: 
                 shared = xvars1.intersection(xvars2)
                 if len(shared) > 0:
                     hogs.remove(hog1)
@@ -194,19 +194,19 @@ def randomize_hedgehogs(problem):
                     hogs.add(newhog)
                     queue.append(newhog)
                     break
-
+    
     # rewrite hogs
     for hog in hogs:
         cvar = hog[0]
         xvars = hog[1]
         varlist = list(xvars)
         random.shuffle(varlist)
-        for i in range(1, len(varlist)):
-            v1 = varlist[i-1]
-            v2 = cvar
+        for i in range(1, len(varlist)): 
+            v1 = varlist[i-1] 
+            v2 = cvar 
             v3 = varlist[i]
             # ADD CONSTRAINT
-            problem.add_constraint(AngleConstraint(v1,v2,v3,
+            problem.add_constraint(AngleConstraint(v1,v2,v3, 
                 angle_3p(problem.get_point(v1), problem.get_point(v2), problem.get_point(v3))
             ))
 
@@ -218,7 +218,7 @@ def randomize_balloons(problem):
        modifies problem
     """
     assert problem.dimension == 2
-    angles = filter(lambda c: isinstance(c, AngleConstraint), problem.cg.constraints())
+    angles = [c for c in problem.cg.constraints() if isinstance(c, AngleConstraint)]
     balloons = set()
     toremove = set()
     # make hogs from angles
@@ -229,7 +229,7 @@ def randomize_balloons(problem):
             cvar2 = angle2.variables()[1]
             if cvar1 == cvar2: continue
             shared = set(angle1.variables()).intersection(angle2.variables())
-            if len(shared) == 3:
+            if len(shared) == 3: 
                 balloon = frozenset(angle1.variables())
                 balloons.add(balloon)
                 toremove.add(angle1)
@@ -239,7 +239,7 @@ def randomize_balloons(problem):
     for con in toremove:
         problem.rem_constraint(con)
 
-    print( "initial balloons", balloons)
+    print("initial balloons", balloons)
 
     # combine balloons
     queue = list(balloons)
@@ -258,8 +258,8 @@ def randomize_balloons(problem):
                 balloons.add(newbal)
                 queue.append(newbal)
                 break
-
-    print ("combined balloons", balloons)
+    
+    print("combined balloons", balloons)
 
     # rewrite balloons
     for bal in balloons:
@@ -269,10 +269,10 @@ def randomize_balloons(problem):
         for i in range(2, len(vars)):
             lvars = vars[i-2:i+1]
             random.shuffle(lvars)
-            problem.add_constraint(AngleConstraint(lvars[0],lvars[1],lvars[2],
+            problem.add_constraint(AngleConstraint(lvars[0],lvars[1],lvars[2], 
                 angle_3p(problem.get_point(lvars[0]), problem.get_point(lvars[1]), problem.get_point(lvars[2]))
             ))
-            problem.add_constraint(AngleConstraint(lvars[1],lvars[2],lvars[0],
+            problem.add_constraint(AngleConstraint(lvars[1],lvars[2],lvars[0], 
                 angle_3p(problem.get_point(lvars[1]), problem.get_point(lvars[2]), problem.get_point(lvars[0]))
             ))
 
@@ -292,7 +292,7 @@ def random_distance_problem_3D(npoints, radius, roundoff):
         ])
 		sellist = list(problem.cg.variables())
 		problem.add_point(newvar, newpoint)
-		# add distance constraints
+		# add distance constraints    
 		for j in range(min(3,len(sellist))):
 			index = random.randint(0,len(sellist)-1)
 			var = sellist.pop(index)
@@ -303,11 +303,11 @@ def random_distance_problem_3D(npoints, radius, roundoff):
 
 def random_triangular_problem_3D(npoints, radius, roundoff, pangle):
 	problem = random_distance_problem_3D(npoints, radius, roundoff)
-	points = problem.cg.variables()
+	points = problem.cg.variables()	
 	triangles = []
 	for i1 in range(len(points)):
 		for i2 in range(i1+1,len(points)):
-			for i3 in range(i2+1,len(points)):
+			for i3 in range(i2+1,len(points)):	
 				p1 = points[i1]
 				p2 = points[i2]
 				p3 = points[i3]
@@ -326,13 +326,13 @@ def random_triangular_problem_3D(npoints, radius, roundoff, pangle):
 				                 problem.get_point(p),
 				                 problem.get_point(pr))
 					problem.add_constraint(AngleConstraint(pl,p,pr,angle))
-	return problem
+	return problem	
 
 def test():
     #problem = random_triangular_problem_3D(10, 10.0, 0.0, 0.5)
     problem = random_problem_2D(10, 10.0, 0.0, 0.6)
     problem = randomize_angles(problem)
-    print (problem)
+    print(problem)
 
-if __name__ == "__main__":
+if __name__ == "__main__": 
     test()

@@ -28,32 +28,32 @@ class KindFilter(Filter):
         IncrementalSet.__init__(self,[incrset])
 
     def _receive_add(self, source, object):
-        if (isinstance(object,self._classobj) and
+        if (isinstance(object,self._classobj) and 
             (len(object.vars) <= self._maxpoints or self._maxpoints == 0) and
             len(object.vars) >= self._minpoints):
-            self._add(object)
-
-    def _receive_remove(self, source, object):
-        self._remove(object)
-
+            self._add(object)  
+                
+    def _receive_remove(self, source, object):        
+        self._remove(object)       
+    
     def __eq__(self, other):
         if isinstance(other, KindFilter):
             return (self._input, self._kind, self._minpoints)==(other._input,other._kind, self._minpoints)
         else:
-            return False
+            return False 
 
     def __hash__(self):
         return hash((self._input, self._kind, self._minpoints))
 
     def __repr__(self):
         return "KindFilter(%s,%s,%s)"%(str(self._kind),str(self._minpoints),str(self._input))
-
+ 
 
 class NConnectedPairs(IncrementalSet):
     """Incremental set of all unordered pairs of N-connected clusters in 1 incremental sets."""
-
+ 
     def __init__(self, solver, n, incrset1, incrset2):
-        """Creates an incremental set of all pairs frozetset([c1, c2]) from incrset1 and incrset2 respectively,
+        """Creates an incremental set of all pairs frozetset([c1, c2]) from incrset1 and incrset2 respectively, 
             that are connected with N variables, according to solver"""
         # defining variables
         self._solver = solver
@@ -66,15 +66,15 @@ class NConnectedPairs(IncrementalSet):
         IncrementalSet.__init__(self, [incrset1, incrset2])
 
     def _receive_add(self,source, obj):
-        # determine 1-connected objects
+        # determine 1-connected objects 
         connected = set()
         for var in obj.vars:
             dependend = self._solver.find_dependend(var)
             # check that connected objects in both sets
             if source == self._incrset1:
-                dependend = filter(lambda x: x in self._incrset2, dependend)
+                dependend = [x for x in dependend if x in self._incrset2]
             elif source == self._incrset2:
-                dependend = filter(lambda x: x in self._incrset1, dependend)
+                dependend = [x for x in dependend if x in self._incrset1]
             connected.update(dependend)
         # dont pair (obj,obj)
         if obj in connected:
@@ -86,10 +86,10 @@ class NConnectedPairs(IncrementalSet):
                 # add new pair
                 pair = frozenset([obj, obj2])
                 self._add(pair)
-                # add to mapping
-                if obj not in self._map:
+                # add to mapping 
+                if obj not in self._map: 
                     self._map[obj] = set()
-                if obj2 not in self._map:
+                if obj2 not in self._map: 
                     self._map[obj2] = set()
                 self._map[obj].add(pair)
                 self._map[obj2].add(pair)
@@ -102,17 +102,17 @@ class NConnectedPairs(IncrementalSet):
             # remove pair from mapping
             self._map[obj1].remove(par)
             self._map[obj2].remove(pair)
-            # clean up mapping
-            if len(self._map[obj1]) == 0:
+            # clean up mapping 
+            if len(self._map[obj1]) == 0: 
                 del self._map[obj1]
-            if len(self._map[obj2]) == 0:
+            if len(self._map[obj2]) == 0: 
                 del self._map[obj2]
-
+ 
     def __eq__(self, other):
         if isinstance(other, NConnectedPairs):
-            return (self._solver == other._solver and
-                    self._incrset1 == other._incrset1 and
-                    self._incrset2 == other._incrset2 and
+            return (self._solver == other._solver and 
+                    self._incrset1 == other._incrset1 and 
+                    self._incrset2 == other._incrset2 and 
                     self._n == other._n)
         else:
             return False
@@ -142,11 +142,11 @@ class PatternMatches(IncrementalSet):
             self._subs.append(sub)
             # NOTE: we cannot use source like this to link it to a pattern, because sources may be equal!
             self._source2pattern[sub]=[clusterpattern]
-            print( "creating",sub,"for",self._source2pattern[sub])
+            print("creating",sub,"for",self._source2pattern[sub])
         #rof
         # create sub-sets for all pairs of clusters
         listoftuples = list(setoftuples)
-        l = len(listoftuples)
+        l = len(listoftuples) 
         for i in range(l):
             for j in range(i+1,l):
                 cp1 = listoftuples[i]
@@ -162,25 +162,25 @@ class PatternMatches(IncrementalSet):
                     self._subs.append(sub)
                     # NOTE: we cannot use source like this to link it to a pattern, because sources may be equal!
                     self._source2pattern[sub]=[cp1,cp2]
-                    print( "creating",sub,"for",self._source2pattern[sub])
+                    print("creating",sub,"for",self._source2pattern[sub])
 
         IncrementalSet.__init__(self, self._subs)
-
+            
     def _receive_add(self, source, object):
         # NOTE: we cannot use source like this to link it to a pattern, because sources may be equal!
-        print ("receive",object)
+        print("receive",object)
         pattern = self._source2pattern[source]
-        print ("matching sub-pattern", pattern)
+        print("matching sub-pattern", pattern)
         #raise NotImplementedError
-
-    def _receive_remove(self, source, object):
+                
+    def _receive_remove(self, source, object):        
         raise NotImplementedError
-
+ 
     def __eq__(self, other):
         if isinstance(other, PatternMatches):
             return (self._solver, self._pattern)==(other._solver,other._pattern)
         else:
-            return False
+            return False 
 
     def __hash__(self):
         return hash((self._solver, self._pattern))
@@ -195,11 +195,11 @@ def test_icpm():
     solver.add(Rigid(["p1","p2"]))
     solver.add(Rigid(["p2","p3"]))
     solver.add(Rigid(["p1","p3","p4","p5"]))
-    pattern = [["rigid","$d_ab",["$a", "$b"]],
-            ["rigid", "$d_ac",["$a", "$c"]],
+    pattern = [["rigid","$d_ab",["$a", "$b"]], 
+            ["rigid", "$d_ac",["$a", "$c"]], 
             ["rigid", "$d_bc",["$b","$c"]]]
     matches = PatternMatches(pattern, solver)
-    print( list(matches))
+    print(list(matches))
 
 if __name__ == "__main__":
     test_icpm()
