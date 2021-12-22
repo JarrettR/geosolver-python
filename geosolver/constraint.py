@@ -8,29 +8,29 @@ number of variables, and a relation between those variables that must be
 satisfied.
 
 Note that no values are associated with variables in the constraint graph, i.e.
-satisfying constraints is not considered in this module. 
+satisfying constraints is not considered in this module.
 
 The constraint graph is (internally) represented by a directed bi-partite
 graph; nodes are variables or constraints and edges run from variables to
-constraints. 
+constraints.
 
 Variables are just names; any non-mutable hashable object, e.g. a string,
 qualifies for a variable. Constraints must be instances of (suclasses of) class
-Constraint, and must also be non-mutable, hashable objects. 
+Constraint, and must also be non-mutable, hashable objects.
 
 Changes:
 23 Nov 2004 - added Error classes, updated naming and doc conventions (PEP 8, 257)
 24 Nov 2004 - added semi-abstract implementation for Constraint.variables()
 """
 
-from graph import Graph
-from notify import Notifier
+from .graph import Graph
+from .notify import Notifier
 
 def _strseq(seq):
-    """print string rep of items in a sequence, seperated by commas. 
-    
+    """print string rep of items in a sequence, seperated by commas.
+
        It realy sucks that str(list/dict) uses the __repr__ method of items
-       in the list/dict. Ergo, this function. 
+       in the list/dict. Ergo, this function.
     """
     s = ""
     for el in seq:
@@ -42,27 +42,27 @@ def _strseq(seq):
 
 class Constraint:
     """Abstract constraint
-    
+
        A constraint defines a relation between variables that should be
        satisfied.
-    
+
        Subclasses must define proper __init__(), variables() and satisfied()
-       methods. Constraints must be non-mutable, hashable objects.  
+       methods. Constraints must be non-mutable, hashable objects.
     """
-    
+
     def variables(self):
         """return a list of variables
-        
+
            If an attribute '_variables' has been defined, a new list
-           with the contents of that attribute will be returned. 
-           Subclasses may choose to initialise this variable or to 
-           override this function. 
+           with the contents of that attribute will be returned.
+           Subclasses may choose to initialise this variable or to
+           override this function.
         """
         if hasattr(self, "_variables"):
             return list(self._variables)
         else:
             raise NotImplementedError
-    
+
     def satisfied(self, mapping):
         """return true iff constraint is satisfied by given mapping
            from variables to values (dictionary)"""
@@ -71,10 +71,10 @@ class Constraint:
 
 class ConstraintGraph(Notifier):
     """A constraint graph.
-    
+
        For more information see module documentation.
     """
-    
+
     def __init__(self):
         """Create a new, empty ConstraintGraph"""
         Notifier.__init__(self)
@@ -85,7 +85,7 @@ class ConstraintGraph(Notifier):
         self._graph = Graph()
         """A graph for fast navigation. The graph contains an
            edge from a var to a constraint if the constraint is imposed
-           on that variable""" 
+           on that variable"""
 
     def variables(self):
         """return a list of variables"""
@@ -101,7 +101,7 @@ class ConstraintGraph(Notifier):
             self._variables[varname] = None
             self._graph.add_vertex(varname)
             self.send_notify(("add_variable", varname))
-    
+
     def rem_variable(self, varname):
         """remove a variable"""
         if varname in self._variables:
@@ -121,7 +121,7 @@ class ConstraintGraph(Notifier):
                 self.add_variable(var)
                 self._graph.add_edge(var, con)
             self.send_notify(("add_constraint", con))
-    
+
     def rem_constraint(self, con):
         """remove a variable"""
         if con in self._constraints:
@@ -135,7 +135,7 @@ class ConstraintGraph(Notifier):
             return self._graph.outgoing_vertices(var)
         else:
             return []
-    
+
     def get_constraints_on_all(self, varlist):
         """get a list of all constraints on all vars in list"""
         if len(varlist) == 0: return []
@@ -195,11 +195,11 @@ def test():
     problem.add_variable('b')
     plus = PlusConstraint('a','b','c')
     problem.add_constraint(plus)
-    print str(problem)
-    print "get_constraints_on(a) = ",
-    print map(str, problem.get_constraints_on('a'))
+    print (str(problem))
+    print ("get_constraints_on(a) = ")
+    print (map(str, problem.get_constraints_on('a')))
 
-if __name__ == "__main__": 
+if __name__ == "__main__":
     test()
 
 

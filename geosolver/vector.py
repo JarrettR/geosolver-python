@@ -3,11 +3,12 @@
 #
 import math
 import random
+from functools import reduce
 
 """
 A list based vector class that supports elementwise mathematical operations
 
-In this version, the vector call inherits from list; this 
+In this version, the vector call inherits from list; this
 requires Python 2.2 or later.
 """
 
@@ -23,14 +24,14 @@ class vector(list):
                         # result to vector
                         return vector(super(vector, self).__getslice__(i,j))
                 except:
-                        raise TypeError, 'vector::FAILURE in __getslice__'
-                
+                        raise TypeError('vector::FAILURE in __getslice__')
+
         def __add__(self, other):
                 return vector(map(lambda x,y: x+y, self, other))
 
         def __neg__(self):
                 return vector(map(lambda x: -x, self))
-        
+
         def __sub__(self, other):
                 return vector(map(lambda x,y: x-y, self, other))
 
@@ -49,7 +50,16 @@ class vector(list):
                 return (self*other)
 
 
-        def __div__(self, other):
+        def __truediv__(self, other):
+            """
+            Element by element division.
+            """
+            try:
+                    return vector(map(lambda x,y: x/y, self, other))
+            except:
+                    return vector(map(lambda x: x/other, self))
+
+        def __floordiv__(self, other):
             """
             Element by element division.
             """
@@ -81,7 +91,7 @@ class vector(list):
                         vector(map(lambda x: x.real, self)),
                         vector(map(lambda x: x.imag, self)),
                         ]
-        
+
         def AbsArg(self):
                 """
                 Return modulus and phase parts
@@ -96,7 +106,7 @@ class vector(list):
             """
             Prints out the vector.
             """
-            print self
+            print (self)
 
         def concatonated(self,other):
             """this vector concatonated with another"""
@@ -135,16 +145,17 @@ def randvec(n, lmin=0.0, lmax=1.0, roundoff=0.0):
                         return val
         return vector(map(lambda x: _round(random.uniform(lmin, lmax),roundoff),
                        range(n)))
-        
+
 def dot(a, b):
     """
     dot product of two vectors.
     """
     try:
-        return reduce(lambda x, y: x+y, a*b, 0.)
+        return reduce(lambda x, y: x + y, a * b, 0.)
     except:
-        raise TypeError, 'vector::FAILURE in dot'
-        
+        raise TypeError('vector::FAILURE in dot')
+
+
 def cross(a, b):
     """
     cross product of two 3-vectors.
@@ -154,7 +165,7 @@ def cross(a, b):
                 a[2]*b[0] - a[0]*b[2],
                 a[0]*b[1] - a[1]*b[0]])
     else:
-            raise TypeError, 'vector.cross - args be 3-vectors'
+            raise TypeError('vector.cross - args be 3-vectors')
 
 def norm(a):
     """
@@ -163,7 +174,7 @@ def norm(a):
     try:
         return math.sqrt(abs(dot(a,a)))
     except:
-        raise TypeError, 'vector::FAILURE in norm'
+        raise TypeError('vector::FAILURE in norm')
 
 def sum(a):
     """
@@ -172,10 +183,10 @@ def sum(a):
     try:
         return reduce(lambda x, y: x+y, a, 0)
     except:
-        raise TypeError, 'vector::FAILURE in sum'
+        raise TypeError('vector::FAILURE in sum')
 
 # elementwise operations
-        
+
 def log10(a):
     """
     log10 of each element of a.
@@ -183,7 +194,7 @@ def log10(a):
     try:
         return vector(map(math.log10, a))
     except:
-        raise TypeError, 'vector::FAILURE in log10'
+        raise TypeError('vector::FAILURE in log10')
 
 def log(a):
     """
@@ -192,8 +203,8 @@ def log(a):
     try:
         return vector(map(math.log, a))
     except:
-        raise TypeError, 'vector::FAILURE in log'
-            
+        raise TypeError('vector::FAILURE in log')
+
 def exp(a):
     """
     Elementwise exponential.
@@ -201,7 +212,7 @@ def exp(a):
     try:
         return vector(map(math.exp, a))
     except:
-        raise TypeError, 'vector::FAILURE in exp'
+        raise TypeError('vector::FAILURE in exp')
 
 def sin(a):
     """
@@ -210,8 +221,8 @@ def sin(a):
     try:
         return vector(map(math.sin, a))
     except:
-        raise TypeError, 'vector::FAILURE in sin'
-            
+        raise TypeError('vector::FAILURE in sin')
+
 def tan(a):
     """
     Elementwise tangent.
@@ -219,8 +230,8 @@ def tan(a):
     try:
         return vector(map(math.tan, a))
     except:
-        raise TypeError, 'vector::FAILURE in tan'
-            
+        raise TypeError('vector::FAILURE in tan')
+
 def cos(a):
     """
     Elementwise cosine.
@@ -228,7 +239,7 @@ def cos(a):
     try:
         return vector(map(math.cos, a))
     except:
-        raise TypeError, 'vector::FAILURE in cos'
+        raise TypeError('vector::FAILURE in cos')
 
 def asin(a):
     """
@@ -237,16 +248,16 @@ def asin(a):
     try:
         return vector(map(math.asin, a))
     except:
-        raise TypeError, 'vector::FAILURE in asin'
+        raise TypeError('vector::FAILURE in asin')
 
 def atan(a):
     """
     Elementwise inverse tangent.
-    """        
+    """
     try:
         return vector(map(math.atan, a))
     except:
-        raise TypeError, 'vector::FAILURE in atan'
+        raise TypeError('vector::FAILURE in atan')
 
 def acos(a):
     """
@@ -255,7 +266,7 @@ def acos(a):
     try:
         return vector(map(math.acos, a))
     except:
-        raise TypeError, 'vector::FAILURE in acos'
+        raise TypeError('vector::FAILURE in acos')
 
 def sqrt(a):
     """
@@ -264,7 +275,7 @@ def sqrt(a):
     try:
         return vector(map(math.sqrt, a))
     except:
-        raise TypeError, 'vector::FAILURE in sqrt'
+        raise TypeError('vector::FAILURE in sqrt')
 
 def sinh(a):
     """
@@ -273,7 +284,7 @@ def sinh(a):
     try:
         return vector(map(math.sinh, a))
     except:
-        raise TypeError, 'vector::FAILURE in sinh'
+        raise TypeError('vector::FAILURE in sinh')
 
 def tanh(a):
     """
@@ -282,7 +293,7 @@ def tanh(a):
     try:
         return vector(map(math.tanh, a))
     except:
-        raise TypeError, 'vector::FAILURE in tanh'
+        raise TypeError('vector::FAILURE in tanh')
 
 def cosh(a):
     """
@@ -291,7 +302,7 @@ def cosh(a):
     try:
         return vector(map(math.cosh, a))
     except:
-        raise TypeError, 'vector::FAILURE in cosh'
+        raise TypeError('vector::FAILURE in cosh')
 
 
 def pow(a,b):
@@ -304,98 +315,98 @@ def pow(a,b):
         try:
                 return vector(map(lambda x,y: x**y, a, b))
         except:
-                raise TypeError, 'vector::FAILURE in pow'
-        
-def atan2(a,b):    
+                raise TypeError('vector::FAILURE in pow')
+
+def atan2(a,b):
     """
     Arc tangent
-    
+
     """
     try:
         return vector(map(math.atan2, a, b))
     except:
-        raise TypeError, 'vector::FAILURE in atan2'
-        
+        raise TypeError('vector::FAILURE in atan2')
+
 
 ###############################################################################
 if __name__ == "__main__":
 
-        print 'a = zeros(4)'
+        print( 'a = zeros(4)')
         a = zeros(4)
 
-        print 'a.__doc__=',a.__doc__
+        print( 'a.__doc__=',a.__doc__)
 
-        print 'a[0] = 1.0'
+        print( 'a[0] = 1.0')
         a[0] = 1.0
 
-        print 'a[3] = 3.0'
+        print( 'a[3] = 3.0')
         a[3] = 3.0
 
-        print 'a[0]=', a[0]
-        print 'a[1]=', a[1]
+        print( 'a[0]=', a[0])
+        print( 'a[1]=', a[1])
 
-        print 'len(a)=',len(a)
-        print 'a.size()=', a.size()
-                        
+        print( 'len(a)=',len(a))
+        print( 'a.size()=', a.size())
+
         b = vector([1, 2, 3, 4])
-        print 'a=', a
-        print 'b=', b
+        print( 'a=', a)
+        print( 'b=', b)
 
-        print 'a+b'
+        print( 'a+b')
         c = a + b
         c.out()
 
-        print '-a'
+        print ('-a')
         c = -a
         c.out()
         a.out()
 
-        print 'a-b'
+        print( 'a-b')
         c = a - b
         c.out()
 
-        print 'a*1.2'
+        print( 'a*1.2')
         c = a*1.2
         c.out()
 
 
-        print '1.2*a'
+        print( '1.2*a')
         c = 1.2*a
         c.out()
-        print 'a=', a
+        print( 'a=', a)
 
-        print 'dot(a,b) = ', dot(a,b)
-        print 'dot(b,a) = ', dot(b,a)
+        print ('dot(a,b) = ', dot(a,b))
+        print ('dot(b,a) = ', dot(b,a))
 
-        print 'a*b'
+        print( 'a*b')
         c = a*b
         c.out()
-        
-        print 'a/1.2'
+
+        print( 'a/1.2')
         c = a/1.2
         c.out()
 
-        print 'a[0:2]'
+        print( 'a[0:2]')
         c = a[0:2]
         c.out()
 
-        print 'a[2:5] = [9.0, 4.0, 5.0]'
+        print ('a[2:5] = [9.0, 4.0, 5.0]')
         a[2:5] = [9.0, 4.0, 5.0]
         a.out()
 
-        print 'sqrt(a)=',sqrt(a)
-        print 'pow(a, 2*ones(len(a)))=',pow(a, 2*ones(len(a)))
-        print 'pow(a, 2)=',pow(a, 2*ones(len(a)))
+        print ('sqrt(a)=',sqrt(a))
+        print( 'pow(a, 2*ones(len(a)))=',pow(a, 2*ones(len(a))))
+        print ('pow(a, 2)=',pow(a, 2*ones(len(a))))
 
-        print 'ones(10)'
+        print( 'ones(10)')
         c = ones(10)
         c.out()
 
-        print 'zeros(10)'
+        print( 'zeros(10)')
         c = zeros(10)
-        c.out()        
+        c.out()
 
-        print 'del a'
+        print( 'del a')
         del a
 
         try:

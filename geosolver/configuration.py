@@ -1,10 +1,11 @@
-"""This module provides a Configuration class. 
+"""This module provides a Configuration class.
 
 A configuration is a set of named points with coordinates."""
 
-from matfunc import Vec, Mat
-from intersections import *
-from tolerance import *
+from .matfunc import Vec, matrix_factory
+from .intersections import *
+from .tolerance import *
+from . import vector
 
 def perp2D(v):
     w = Vec(v)
@@ -13,11 +14,11 @@ def perp2D(v):
     return w
 
 class Configuration:
-    """A set of named points with coordinates of a specified dimension. 
-    
-       Immutable. Defines equality and a hash function. 
-    
-       Attributes: 
+    """A set of named points with coordinates of a specified dimension.
+
+       Immutable. Defines equality and a hash function.
+
+       Attributes:
        map - a dictionary mapping variable names to point values.
        dimension - the dimension of the space in which the configuration is embedded
        underconstrained - flag indicating an underconstrained merge (not a unique solution)
@@ -37,7 +38,7 @@ class Configuration:
         """returns a shallow copy"""
         new = Configuration(self.map)
         new.underconstrained = self.underconstrained
-        return new 
+        return new
 
     def vars(self):
         """return list of variables"""
@@ -75,7 +76,7 @@ class Configuration:
         for v in vars:
             newmap[v] = self.map[v]
         return Configuration(newmap)
-    
+
     def merge(self, other):
         """returns a new configurations which is this one plus the given other configuration transformed, such that common points will overlap (if possible)."""
         t = self.merge_transform(other)
@@ -91,7 +92,7 @@ class Configuration:
         result = self.add(othertransformed)
         result.underconstrained = t.underconstrained
         return result
-    
+
     # NON-PUBLIC
 
     def merge_transform(self,other):
@@ -173,13 +174,13 @@ class Configuration:
                 cs2 = make_hcs_2d_scaled(p21, p21+vector.vector([1.0,0.0]))
             else:
                 cs2 = make_hcs_2d_scaled(p21, p22)
-            print cs1, cs2
+            print (cs1, cs2)
             t = cs_transform_matrix(cs2, cs1)
             t.underconstrained = underconstrained
             return t
 
     def _merge_transform_3D(self, other):
-        """returns a matrix for a rigid transformation 
+        """returns a matrix for a rigid transformation
            such that points in other are mapped onto points in self
         """
         shared = set(self.vars()).intersection(other.vars())
@@ -198,7 +199,7 @@ class Configuration:
             v1 = list(shared)[0]
             p1s = self.map[v1]
             p1o = other.map[v1]
-            cs1 = make_hcs_3d(p1s, 
+            cs1 = make_hcs_3d(p1s,
                               p1s+vector.vector([1.0,0.0,0.0]),
                               p1s+vector.vector([0.0,1.0,0.0]))
             cs2 = make_hcs_3d(p1o,
@@ -291,12 +292,12 @@ class Configuration:
         elif len(self.map) != len(other.map):
             return False
         else:
-            if not isinstance(other, Configuration): 
+            if not isinstance(other, Configuration):
                 return False
             for var in self.map:
                 if var not in other.map:
                     return False
-            # determine a rotation-translation transformation 
+            # determine a rotation-translation transformation
             # to transform other onto self
             t = self.merge_transform(other)
             othertransformed = other.transform(t)
@@ -305,18 +306,18 @@ class Configuration:
                 d = distance_2p(othertransformed.get(var), self.get(var))
                 if tol_gt(d, 0.0):
                     return False
-            return True 
-    
+            return True
+
     def makehash(self):
         """the hash is based only on variable names (not values)"""
         val = 0
         for var in self.map:
-            val = val + hash(var) 
+            val = val + hash(var)
         self.hashvalue = hash(val)
 
     def checkdimension(self):
         """returns the dimension of the points, or zero if they are of different dimensions"""
-        var = iter(self.vars()).next()
+        var = iter(self.vars()).__next__()
         dim = len(self.get(var))
         for var in self.map:
             if len(self.get(var)) != dim:
@@ -348,7 +349,7 @@ def testeq():
     q2 = vector.vector([1.0,0.0,0.0])
     q3 = vector.vector([0.0,-1.0,0.0])
     c2 = Configuration({1:q1,2:q2,3:q3})
-    print c1 == c2
+    print( c1 == c2)
 
 def test():
     p1 = vector.vector([0.0,0.0,0.0])
@@ -357,8 +358,8 @@ def test():
     p = Configuration({1:p1,2:p2,3:p3})
     q1 = vector.vector([0.0,0.0,3.0])
     q = Configuration({1:q1})
-    print p.merge(q)
-    print q.merge(p)
+    print (p.merge(q))
+    print (q.merge(p))
 
 
 if __name__ == "__main__": test()

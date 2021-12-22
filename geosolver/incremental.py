@@ -1,38 +1,38 @@
-"""This module provides various incrementally updated set-like containers.""" 
+"""This module provides various incrementally updated set-like containers."""
 
-import notify
+from . import notify
 import weakref
 
 class IncrementalSet(notify.Notifier, notify.Listener):
-    """This is the base class for various incrementally updated set-like containers. 
+    """This is the base class for various incrementally updated set-like containers.
        The represented set can change when it is notified of changes in other IncementalSets,
        and it can notify other IncrementalSets when objects are added or removed.
        Its contents can be iterated using 'iter', and it supports the 'in' and 'len queries.
-       
+
        All objects in the set are unique, and objects must implement __hash__ and __eq__.
-       
+
        Note that this class does not provide public methods for adding and removing objects.
        See MutableSet for a user-modifiable subclass.
 
        Subclasses should implement the _receive_add and _receive_remove methods, which are
        called when an incset is notified by another incset. If your subclass uses the
        Listerner/Notifier scheme for notification from other objects, your receive_notify
-       function should call IncrementalSet.receive_notify. 
+       function should call IncrementalSet.receive_notify.
 
-       IncrementalSets are unqiue. Multiple instances of equivalent incsets refer to the 
-       first of its kind. So update operations are executed only once, even if multiple 
+       IncrementalSets are unqiue. Multiple instances of equivalent incsets refer to the
+       first of its kind. So update operations are executed only once, even if multiple
        instances of equivalent incset exist. IncrementalSets must also define the __eq__ and
-       __hash__ methods. 
-    """ 
+       __hash__ methods.
+    """
 
     # keep track of all IncrementalSets, so we can re-use identical IncrementalSets
-    # _all[x] maps to a tuple (wr, cnt) 
+    # _all[x] maps to a tuple (wr, cnt)
     # where wr is a weak refererence to the original, first instantiated nest equal to x
     # and cnt is the total number of instantiations (past and present) of x (never decreases)
     _all = weakref.WeakKeyDictionary()
 
     def __init__(self, inputs=[]):
-        """Instantiate a new incset, that listens for changes from given incsets. 
+        """Instantiate a new incset, that listens for changes from given incsets.
            If an equivalent incset allready exists, this object stores only a
            reference, and all IncrementalSet methods will use this reference.
         """
@@ -49,7 +49,7 @@ class IncrementalSet(notify.Notifier, notify.Listener):
             self._ref = None
             count = 1
             self._all[self] = (weakref.ref(self), count)
-       
+
             # initialise instance variables
             self._objects = set()
             self._inputs = set(inputs)
@@ -58,11 +58,11 @@ class IncrementalSet(notify.Notifier, notify.Listener):
              # add incsets
             for incset in self._inputs:
                 self._add_input(incset)
-            # update from initial state of all incsets 
+            # update from initial state of all incsets
             for incset in self._inputs:
                 for obj in incset:
                     self._receive_add(incset, obj)
-                   
+
     def _add_input(self, incset):
         """Add an incset, listen for notifications from it"""
         if self._ref:
@@ -75,14 +75,14 @@ class IncrementalSet(notify.Notifier, notify.Listener):
         if source in self.notifiers:
             (action, object) = message
             if action == "add":
-                self._receive_add(source, object)        
+                self._receive_add(source, object)
             elif action == "remove":
-                self._receive_remove(source, object)        
+                self._receive_remove(source, object)
             else:
-                print "Warning:",self,"reveiced unknown message"
+                print( "Warning:",self,"reveiced unknown message")
         else:
-            print "Warning:", self, "reveiced notification from unknown source"
- 
+            print( "Warning:", self, "reveiced notification from unknown source")
+
     def _receive_add(self,source, object):
         raise Exception("This method is abstract. Subclasses should implement it")
 
@@ -111,9 +111,9 @@ class IncrementalSet(notify.Notifier, notify.Listener):
                 self.send_notify(("remove", object))
 
     def __iter__(self):
-        """Returns an iterator for the objects contained here. 
+        """Returns an iterator for the objects contained here.
            Note that the iterator will become invalid when objects are added or removed, which
-           may be a side-effect of changing other IncrementalSets. 
+           may be a side-effect of changing other IncrementalSets.
         """
         if self._ref:
             # remove object from ref, if given
@@ -137,13 +137,13 @@ class IncrementalSet(notify.Notifier, notify.Listener):
 
 
 class MutableSet(IncrementalSet):
-    """A set-like container that can notify other objects of changes, when objects are added or removed"""  
+    """A set-like container that can notify other objects of changes, when objects are added or removed"""
 
     def __init__(self, seq=[]):
         IncrementalSet.__init__(self)
         for obj in seq:
             self._add(obj)
-     
+
     def add(self, object):
         self._add(object)
 
@@ -209,17 +209,24 @@ class Filter(IncrementalSet):
         IncrementalSet.__init__(self,[incrset])
 
     def _receive_add(self, source, object):
-        if self._testfunction(object):
-            self._add(object)        
-                
-    def _receive_remove(self, source, object):        
-        self._remove(object)        
-    
+        if hasattr(object, '__len__'):
+            if self._testfunction(object[0], object[1]):
+                self._add(object)
+        else:
+            if self._testfunction(object):
+                self._add(object)
+        # except:
+        #     if self._testfunction(object[0], object[1]):
+        #         self._add(object)
+
+    def _receive_remove(self, source, object):
+        self._remove(object)
+
     def __eq__(self, other):
         if isinstance(other, Filter):
             return (self._incrset, self._testfunction)==(other._incrset,other._testfunction)
         else:
-            return False 
+            return False
 
     def __hash__(self):
         return hash((self._incrset, self._testfunction))
@@ -229,7 +236,7 @@ class Filter(IncrementalSet):
 
 
 class Map(IncrementalSet):
-    """A set-like container that incrementally maps its input through a function. 
+    """A set-like container that incrementally maps its input through a function.
        Note that the mapping function must always return the same output for the same input."""
 
     def __init__(self, mapfunction, incrset):
@@ -240,19 +247,19 @@ class Map(IncrementalSet):
 
     def _receive_add(self, source, object):
         if object not in self._localmap:
-            mapped = self._mapfunction(object)        
-            self._add(mapped)        
+            mapped = self._mapfunction(object[0], object[1])
+            self._add(mapped)
             self._localmap[object] = mapped
 
     def _receive_remove(self, source, object):
         if object in self._localmap:
-            self._remove(self._localmap[object])        
+            self._remove(self._localmap[object])
 
     def __eq__(self, other):
         if isinstance(other, Map):
             return (self._incrset, self._mapfunction)==(other._incrset,other._mapfunction)
         else:
-            return False 
+            return False
 
     def __hash__(self):
         return hash((self._incrset, self._mapfunction))
@@ -297,7 +304,7 @@ class Permutations(IncrementalSet):
         if isinstance(other, Permutations):
             return self._partmatchers == other.partmathers
         else:
-            return False 
+            return False
 
     def __hash__(self):
         return hash(tuple(self._partmatchers))
@@ -325,7 +332,7 @@ class Combinations(IncrementalSet):
     def __init__(self, partmatchers):
         self._partmatchers = list(partmatchers)
         IncrementalSet.__init__(self, partmatchers)
-        
+
     def _receive_add(self, source, obj):
         index = self._partmatchers.index(source)
         if index == -1:
@@ -355,7 +362,7 @@ class Combinations(IncrementalSet):
         if isinstance(other, Combinations):
             return self._partmatchers == other.partmathers
         else:
-            return False 
+            return False
 
     def __hash__(self):
         return hash(tuple(self._partmatchers))
@@ -386,18 +393,18 @@ class Debugger(IncrementalSet):
     def __init__(self, watch_iset):
         self._watch = watch_iset
         IncrementalSet.__init__(self, [self._watch])
- 
+
     def _receive_add(self, source, obj):
-        print "add", obj, "to", source         
+        print( "add", obj, "to", source)
 
     def _receive_remove(self, source, obj):
-        print "remove", obj, "to", source         
+        print( "remove", obj, "to", source)
 
     def __eq__(self, other):
         if isinstance(other, Debugger):
             return self._watch == other.watch
         else:
-            return False 
+            return False
 
     def __hash__(self):
         return hash((self.__class__, self._watch))
@@ -412,31 +419,31 @@ def test1():
     s = MutableSet([5,-3])
     s.add(1)
     s.add(2)
-    print list(s)
+    print( list(s))
     t = Filter(lambda x: x > 1,s)
-    print list(t)
+    print( list(t))
     s.remove(2)
     s.add(3)
-    print list(t)
+    print( list(t))
 
     p = MutableSet([1,2])
     q = MutableSet(['x', 'y'])
     r = Permutations((p,q))
-    print list(r)
+    print( list(r))
     p.add(3)
-    print list(r)
+    print( list(r))
     q.remove('x')
-    print list(r)
+    print( list(r))
 
     u = MutableSet(['a', 'b', 'c'])
     w = Combinations((u,u))
-    print list(w)
+    print( list(w))
     u.add('d')
-    print list(w)
+    print( list(w))
     u.remove('a')
-    print list(w)
+    print( list(w))
 
-    print list(IncrementalSet._all)
+    print( list(IncrementalSet._all))
 
 def test2():
     integers = MutableSet([1,2,3,4,5,6,7,8,9,10])
@@ -446,8 +453,8 @@ def test2():
     odds2 = Filter(odd,integers)
     sq1 = Map(square,odds1)
     sq2 = Map(square,odds2)
-    print set(sq1), set(sq2)
-    print list(IncrementalSet._all)
+    print( set(sq1), set(sq2))
+    print( list(IncrementalSet._all))
 
 def test3():
     integers5 = MutableSet([1,2,3,4,5])
@@ -459,12 +466,12 @@ def test3():
     integers5.remove(2)
     integers10.remove(1)
     integers10.remove(10)
-    print set(union)
-    print set(intersection)
-    print set(difference)
+    print( set(union))
+    print( set(intersection))
+    print( set(difference))
 
 
-if __name__ == '__main__': 
+if __name__ == '__main__':
     test1()
     test2()
     test3()

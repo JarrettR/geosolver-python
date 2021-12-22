@@ -1,39 +1,39 @@
-"""A generic geometric constraint solver. 
+"""A generic geometric constraint solver.
 
-This module provides basic functionality for 
+This module provides basic functionality for
 ClusterSolver2D and ClusterSolver3D.
 """
 
-from graph import Graph
-from method import Method, MethodGraph
-from diagnostic import diag_print
-from notify import Notifier
-from multimethod import MultiVariable, MultiMethod
-from cluster import *
-from configuration import Configuration
-from gmatch import gmatch
-from method import OrMethod,SetMethod
-from incremental import IncrementalSet,MutableSet,Union,Filter
+from .graph import Graph
+from .method import Method, MethodGraph
+from .diagnostic import diag_print
+from .notify import Notifier
+from .multimethod import MultiVariable, MultiMethod
+from .cluster import *
+from .configuration import Configuration
+from .gmatch import gmatch
+from .method import OrMethod,SetMethod
+from .incremental import IncrementalSet,MutableSet,Union,Filter
 
 # --------------------------------------------------
 # ---------- ClusterSolver main class --------------
 # --------------------------------------------------
 
 class ClusterSolver(Notifier):
-    """ 
+    """
     Finds a generic solution for problems formulated by Clusters.
 
-    Cluster are added and removed using the add and remove methods. 
+    Cluster are added and removed using the add and remove methods.
     After adding each Cluster, the solver tries to merge it with
     others, resulting in new Clusters.
 
-    The generic solution is a directed acyclic graph of Clusters and Methods. 
-    Particilar problems and solutions are represented by a Configuration 
-    for each cluster. 
+    The generic solution is a directed acyclic graph of Clusters and Methods.
+    Particilar problems and solutions are represented by a Configuration
+    for each cluster.
 
     For each Cluster a set of Configurations can be set using the
     set method. Configurations are propagated via Methods and can
-    be retrieved with the get method. 
+    be retrieved with the get method.
     """
 
     # ------- PUBLIC METHODS --------
@@ -61,7 +61,7 @@ class ClusterSolver(Notifier):
         self._mg.add_variable(self._prototype_selection_var)
         self._mg.set(self._prototype_selection_var, True)
         # store map of selection_constraints to SelectionMethod (or None)
-        self._selection_method = {} 
+        self._selection_method = {}
         # store root cluster (will be assigned when first cluster added)
         self._rootcluster = None
         # an incrementally updated toplevel set
@@ -72,7 +72,7 @@ class ClusterSolver(Notifier):
         self._applicable_methods = Union(*self._incremental_matchers)
 
     # ------- methods for setting up constraint problems ------------
-    
+
     def add(self, cluster):
         """Add a cluster"""
         diag_print("add_cluster "+str(cluster), "clsolver")
@@ -80,7 +80,7 @@ class ClusterSolver(Notifier):
         self._process_new()
 
     def remove(self, cluster):
-        """Remove a cluster. 
+        """Remove a cluster.
            All dependend objects are also removed.
         """
         self._remove(cluster)
@@ -89,11 +89,11 @@ class ClusterSolver(Notifier):
     def set(self, cluster, configurations):
         """Associate a list of configurations with a cluster"""
         self._mg.set(cluster, configurations)
-        
+
     def get(self, cluster):
         """Return a set of configurations associated with a cluster"""
         return self._mg.get(cluster)
- 
+
     def set_root(self, cluster):
         """Set root cluster, used for positionig and orienting the solutions"""
         diag_print("set root "+str(self._rootcluster), "clsolver")
@@ -107,7 +107,7 @@ class ClusterSolver(Notifier):
     def get_root(self):
         """returns current root cluster or None"""
         return self._rootcluster
-   
+
     def set_prototype_selection(self, enabled):
         """Enable or disable prototype-based solution selection"""
         self._mg.set(self._prototype_selection_var, enabled)
@@ -119,7 +119,7 @@ class ClusterSolver(Notifier):
             if selector != None:
                 selector.add_constraint(con)
                 self._selection_method[con] = selector
-                self._mg.execute(selector)                
+                self._mg.execute(selector)
             #self._selection_method[con] = None     # this line wrong?
             self._selection_method[con] = selector     # this line better?
 
@@ -129,11 +129,11 @@ class ClusterSolver(Notifier):
             selector = self._selection_method[con]
             if selector != None:
                 selector.rem_constraint(con)
-                self._mg.execute(selector)                
-            del self._selection_method[con] 
+                self._mg.execute(selector)
+            del self._selection_method[con]
 
     # ------- methods for inspecting the state of the solver ------------
-    
+
     def variables(self):
         """get list of variables"""
         return self._graph.outgoing_vertices("_variables")
@@ -152,7 +152,7 @@ class ClusterSolver(Notifier):
         # return self._graph.outgoing_vertices("_toplevel")
 
     def is_top_level(self, object):
-        """Returns True iff given cluster is a top-level cluster""" 
+        """Returns True iff given cluster is a top-level cluster"""
         #return self._graph.has_edge("_toplevel",object)
         return object in self._toplevel
 
@@ -160,7 +160,7 @@ class ClusterSolver(Notifier):
         """Return a list of objects that depend on given object directly."""
         l = self._graph.outgoing_vertices(object)
         return filter(lambda x: self._graph.get(object,x) == "dependency", l)
-        
+
     def find_depends(self, object):
         """Return a list of objects that the given object depends on directly"""
         l = self._graph.ingoing_vertices(object)
@@ -168,7 +168,7 @@ class ClusterSolver(Notifier):
 
     def contains(self, obj):
         return self._graph.has_vertex(obj)
-    
+
     # ------------ INTERNALLY USED METHODS --------
 
     # --- dependencies and groups
@@ -194,7 +194,7 @@ class ClusterSolver(Notifier):
         """Return objects needed by given object"""
         l = self._graph.ingoing_vertices(needer)
         return filter(lambda x: self._graph.get(x,needer) == "needed_by", l)
-   
+
     def _add_top_level(self, cluster):
         # self._graph.add_edge("_toplevel",cluster)
         self._new.append(cluster)
@@ -220,7 +220,7 @@ class ClusterSolver(Notifier):
 
 
     # -- add object types
-   
+
     def _add_variable(self, var):
         if not self._graph.has_vertex(var):
             diag_print("_add_variable "+str(var), "clsolver")
@@ -229,8 +229,8 @@ class ClusterSolver(Notifier):
     def _add_cluster(self, newcluster):
         diag_print("_add_cluster "+str(newcluster),"clsolver")
         # check if not already exists
-        if self._graph.has_vertex(newcluster): 
-            raise StandardError, "cluster %s already in clsolver"%(str(newcluster))
+        if self._graph.has_vertex(newcluster):
+            raise StandardError("cluster %s already in clsolver"%(str(newcluster)))
         # update graph
         self._add_to_group("_clusters", newcluster)
         for var in newcluster.vars:
@@ -263,7 +263,7 @@ class ClusterSolver(Notifier):
             self._add_dependency(obj, method)
         self._mg.add_method(method)
         self.send_notify(("add", method))
-    
+
     # ----- solution selection
 
     def _add_prototype_selector(self, merge):
@@ -278,9 +278,9 @@ class ClusterSolver(Notifier):
             clusters = filter(lambda c: isinstance(c, Rigid), clusters)
             clusters = filter(lambda c: len(c.vars) == 1, clusters)
             if len(clusters) < 1:
-                raise StandardError, "no prototype cluster for variable "+str(var)
+                raise StandardError("no prototype cluster for variable "+str(var))
             elif len(clusters) > 1:
-                raise StandardError, "more than one candidate prototype cluster for variable "+str(var)
+                raise StandardError("more than one candidate prototype cluster for variable "+str(var))
             selclusters.append(clusters[0])
         outcluster = incluster.copy()
         selector = PrototypeMethod(incluster, selclusters, outcluster, constraints, self._prototype_selection_var)
@@ -293,7 +293,7 @@ class ClusterSolver(Notifier):
         outcluster = incluster.copy()
         selector = SelectionMethod(incluster, outcluster)
         constraints = self._find_selection_constraints(incluster)
-        for con in constraints: 
+        for con in constraints:
             selector.add_constraint(con)
             self._selection_method[con] = selector
         self._add_cluster(outcluster)
@@ -344,18 +344,19 @@ class ClusterSolver(Notifier):
         return applicable
 
 
-        
+
     # --------------
     # isearch methods
     # --------------
- 
+
     def _process_new(self):
         # try incremental matchers and old style matching alternatingly
-        non_redundant_methods = filter(lambda m: not self._is_redundant_method(m), self._applicable_methods)
+        non_redundant_methods = list(filter(lambda m: not self._is_redundant_method(m), self._applicable_methods))
+
         while len(non_redundant_methods) > 0 or len(self._new) > 0:
             # check incremental matches
-            if len(non_redundant_methods) > 0:  
-                method = iter(non_redundant_methods).next()
+            if len(non_redundant_methods) > 0:
+                method = iter(non_redundant_methods).__next__()
                 #print "applicable methods:", map(str, self._applicable_methods)
                 diag_print("incremental search found:"+str(method),"clsolver._process_new")
                 self._add_method_complete(method)
@@ -363,18 +364,18 @@ class ClusterSolver(Notifier):
                 newobject = self._new.pop()
                 diag_print("search from "+str(newobject), "clsolver")
                 succes = self._search(newobject)
-                if succes and self.is_top_level(newobject): 
+                if succes and self.is_top_level(newobject):
                     # maybe more rules applicable.... push back on stack
                     self._new.append(newobject)
                 #endif
             # endif
-            non_redundant_methods = filter(lambda m: not self._is_redundant_method(m), self._applicable_methods)
+            non_redundant_methods = list(filter(lambda m: not self._is_redundant_method(m), self._applicable_methods))
         # endwhile
     #end def
-    
+
     def _search(self, newcluster):
         diag_print("search from:"+str(newcluster),"clsolver3D")
-        # find all toplevel clusters connected to newcluster 
+        # find all toplevel clusters connected to newcluster
         # via one or more variables
         connected = set()
         for var in newcluster.vars:
@@ -382,7 +383,7 @@ class ClusterSolver(Notifier):
             dependend = filter(lambda x: self.is_top_level(x), dependend)
             connected.update(dependend)
         diag_print("search: connected clusters="+str(connected),"clsolver3D")
-        
+
         # first try handcoded matching
         for methodclass in self._handcoded_methods:
             diag_print("trying handcoded match for "+str(methodclass), "clsolver3D")
@@ -392,12 +393,12 @@ class ClusterSolver(Notifier):
 
         # if incremental matching failed, try full pattern matching
         if self._try_methods(connected):
-            return True 
+            return True
         return False
 
 
     def _try_methods(self, nlet):
-        """finds a possible rewrite rule applications on given set of clusters, applies it 
+        """finds a possible rewrite rule applications on given set of clusters, applies it
            and returns True iff successfull
         """
         refgraph = reference2graph(nlet)
@@ -409,7 +410,7 @@ class ClusterSolver(Notifier):
             # end for match
         # end for method
         return False
-    
+
     def _try_matches(self, methodclass, matches):
         # print "method="+str(methodclass),"number of matches = "+str(len(matches))
         for s in matches:
@@ -421,7 +422,7 @@ class ClusterSolver(Notifier):
                 #print "press key"
                 return True
             else:    # WARING: fast bailout, may be incoplete!
-                return False 
+                return False
         # end for match
         return False
 
@@ -442,13 +443,13 @@ class ClusterSolver(Notifier):
         diag_print("information increasing:"+str(infinc),"clsolver")
         return infinc
 
-       
+
     def _is_cluster_reducing(self, merge):
         # check if method reduces number of clusters (reduc)
         output = merge.outputs()[0]
         nremove = 0
         for cluster in merge.input_clusters():
-            if num_constraints(cluster.intersection(output)) >= num_constraints(cluster): 
+            if num_constraints(cluster.intersection(output)) >= num_constraints(cluster):
                # will be removed from toplevel
                nremove += 1
         # exeption if method sets noremove flag
@@ -471,39 +472,40 @@ class ClusterSolver(Notifier):
 
     def _add_method_complete(self, merge):
         diag_print("add_method_complete "+str(merge), "clsolver")
-        
+
         # do not add if method is redundant
         if self._is_redundant_method(merge):
             return False
 
         output = merge.outputs()[0]
-        
+
         # check consistency and local/global overconstrained
         consistent = True
         local_oc = False
-        for i1 in range(0, len(merge.input_clusters())):
-            for i2 in range(i1+1, len(merge.input_clusters())):
-                c1 = merge.input_clusters()[i1] 
-                c2 = merge.input_clusters()[i2] 
+        mic = list(merge.input_clusters())
+        for i1 in range(0, len(mic)):
+            for i2 in range(i1+1, len(mic)):
+                c1 = mic[i1]
+                c2 = mic[i2]
                 if num_constraints(c1.intersection(c2)) != 0:
                     local_oc = True
                 consistent = consistent and self._is_consistent_pair(c1, c2)
         merge.consistent = consistent
         merge.overconstrained = local_oc
-        
+
         # global overconstrained? (store in output cluster)
         overconstrained = not consistent
         for cluster in merge.input_clusters():
             overconstrained = overconstrained or cluster.overconstrained
         output.overconstrained = overconstrained
-        
+
         # determine infinc before adding (used later)
         infinc = self._is_information_increasing(merge)
-        
+
         # add to graph
         self._add_cluster(output)
         self._add_method(merge)
-        
+
         # remove input clusters from top_level
         merge.restore_toplevel = []    # make restore list in method
         for cluster in merge.input_clusters():
@@ -512,24 +514,24 @@ class ClusterSolver(Notifier):
                 if hasattr(merge,"noremove") and merge.noremove == True:
                     diag_print("block top-level", "clsolver")
                     break
-            # remove input clusters when all its constraints are in output cluster 
-            if num_constraints(cluster.intersection(output)) >= num_constraints(cluster): 
+            # remove input clusters when all its constraints are in output cluster
+            if num_constraints(cluster.intersection(output)) >= num_constraints(cluster):
                 diag_print("remove from top-level: "+str(cluster),"clsolver")
-                self._rem_top_level(cluster) 
+                self._rem_top_level(cluster)
                 merge.restore_toplevel.append(cluster)
             else:
                 diag_print("keep top-level: "+str(cluster),"clsolver")
-        
+
         # add method to determine root-variable
         if hasattr(merge,"noremove") and merge.noremove == True:
-            self._add_root_false(merge.outputs()[0]) 
+            self._add_root_false(merge.outputs()[0])
         else:
             self._add_root_method(merge.input_clusters(),merge.outputs()[0])
         # add solution selection methods, only if information increasing
         if infinc:
             output2 = self._add_prototype_selector(merge)
             output3 = self._add_solution_selector(output2)
-        
+
         # success
         return True
 
@@ -542,7 +544,7 @@ class ClusterSolver(Notifier):
         # add method
         self._add_method(method)
         # make sure its deleted when cluster is deleted
-        self._add_dependency(outcluster, method) 
+        self._add_dependency(outcluster, method)
 
     def _add_root_false(self,outcluster):
         outroot = rootname(outcluster)
@@ -550,7 +552,7 @@ class ClusterSolver(Notifier):
         # add method
         self._add_method(method)
         # make sure its deleted when cluster is deleted
-        self._add_dependency(outcluster, method) 
+        self._add_dependency(outcluster, method)
 
 
     # -- removing objects
@@ -561,7 +563,7 @@ class ClusterSolver(Notifier):
         torestore = set()
         # remove all objects
         for item in todelete:
-            # if merge removed items from toplevel then add them back to top level 
+            # if merge removed items from toplevel then add them back to top level
             if hasattr(item, "restore_toplevel"):
                 for cluster in item.restore_toplevel:
                     torestore.add(cluster)
@@ -595,7 +597,7 @@ class ClusterSolver(Notifier):
             self.send_notify(("remove", item))
         # restore toplevel (also added to _new)
         for cluster in torestore:
-            if self._graph.has_vertex(cluster): 
+            if self._graph.has_vertex(cluster):
                 self._add_top_level(cluster)
 
 
@@ -608,7 +610,7 @@ class ClusterSolver(Notifier):
     ##    #  - no more merges -> False
     ##
     ##    if len(self._graph.outgoing_vertices("_root")) > 1:
-    ##        raise StandardError, "more than one root cluster" 
+    ##        raise StandardError, "more than one root cluster"
     ##    if len(self._graph.outgoing_vertices("_root")) == 1:
     ##        cluster = self._graph.outgoing_vertices("_root")[0]
     ##    else:
@@ -635,17 +637,17 @@ class ClusterSolver(Notifier):
 
     def _is_consistent_pair(self, object1, object2):
         diag_print("in is_consistent_pair "+str(object1)+" "+str(object2),"clsolver")
-        oc = over_constraints(object1, object2) 
+        oc = over_constraints(object1, object2)
         diag_print("over_constraints: "+str(map(str,oc)),"clsolver")
         consistent = True
         for con in oc:
             consistent = consistent and self._consistent_overconstraint_in_pair(con, object1, object2)
         diag_print("global consistent? "+str(consistent),"clsolver")
         return consistent
-    
+
     def _consistent_overconstraint_in_pair(self, overconstraint, object1, object2):
         diag_print("consistent "+str(overconstraint)+" in "+str(object1)+" and "+str(object2)+" ?", "clsolver")
-    
+
         # get sources for constraint in given clusters
         s1 = self._source_constraint_in_cluster(overconstraint, object1)
         s2 = self._source_constraint_in_cluster(overconstraint, object2)
@@ -674,7 +676,7 @@ class ClusterSolver(Notifier):
 
     def _source_constraint_in_cluster(self, constraint, cluster):
         if not self._contains_constraint(cluster, constraint):
-            raise StandardError, "constraint not in cluster"
+            raise StandardError("constraint not in cluster")
         elif self._is_atomic(cluster):
             return cluster
         else:
@@ -686,13 +688,13 @@ class ClusterSolver(Notifier):
             elif len(down) > 1:
                 if method.consistent == True:
                     return self._source_constraint_in_cluster(constraint, down[0])
-                else: 
+                else:
                     diag_print("Warning: source is inconsistent","clsolver")
                     return None
             else:
                 return self._source_constraint_in_cluster(constraint, down[0])
 
-           
+
     def _is_atomic(self, object):
         method = self._determining_method(object)
         if method == None:
@@ -710,16 +712,16 @@ class ClusterSolver(Notifier):
         elif len(methods) > 1:
             raise "object determined by more than one method"
         else:
-            return methods[0] 
+            return methods[0]
 
-    
+
     def _contains_constraint(self, object, constraint):
         if isinstance(constraint, Distance):
             return self._contains_distance(object, constraint)
         elif isinstance(constraint, Angle):
             return self._contains_angle(object, constraint)
         else:
-            raise StandardError, "unexpected case"
+            raise StandardError("unexpected case")
 
     def _contains_distance(self,object, distance):
         if isinstance(object, Rigid):
@@ -731,16 +733,16 @@ class ClusterSolver(Notifier):
 
     def _contains_angle(self, object, angle):
         if isinstance(object, Rigid) or isinstance(object, Balloon):
-            return (angle.vars[0] in object.vars 
-            and angle.vars[1] in object.vars 
+            return (angle.vars[0] in object.vars
+            and angle.vars[1] in object.vars
             and angle.vars[2] in object.vars)
         elif isinstance(object, Hedgehog):
             return (angle.vars[1] == object.cvar and
-            angle.vars[0] in object.xvars and 
+            angle.vars[0] in object.xvars and
             angle.vars[2] in object.xvars)
         elif isinstance(object, Angle):
             return (angle.vars[1] == object.vars[1] and
-            angle.vars[0] in object.vars and 
+            angle.vars[0] in object.vars and
             angle.vars[2] in object.vars)
         else:
             return False
@@ -758,7 +760,7 @@ class ClusterSolver(Notifier):
             s += str(x) + "\n"
         return s
 
-  
+
 # class ClusterSolver
 
 #  -----------------------------------------------------------
@@ -767,16 +769,16 @@ class ClusterSolver(Notifier):
 
 class ClusterMethod(MultiMethod):
     """A method that determines a single output cluster from a set of input clusters.
-       
-       Subclasses should provide a static class variable 'patterngraph', which is a graph, 
+
+       Subclasses should provide a static class variable 'patterngraph', which is a graph,
        describing the pattern that is matched by the solver and used to instantiate the Method.
        (see function pattern2graph)
 
        Alternatively, subclasses may implement the static class method 'handcoded_match', which should
-       return a list of matches (given a new cluster and all connected clusters).   
+       return a list of matches (given a new cluster and all connected clusters).
 
-       Subclasses should implement function _multi_execute such that the output cluster satisfies all 
-       the constraints in the input clusters. 
+       Subclasses should implement function _multi_execute such that the output cluster satisfies all
+       the constraints in the input clusters.
 
        instance vars:
         overconstrained - True iff the merge locally overconstrained
@@ -831,7 +833,7 @@ class PrototypeMethod(MultiMethod):
 
     def multi_execute(self, inmap):
         diag_print("PrototypeMethod.multi_execute called","clmethods")
-        incluster = self._inputs[0] 
+        incluster = self._inputs[0]
         selclusters = []
         for i in range(1,len(self._inputs)-1):
             selclusters.append(self._inputs[i])
@@ -840,7 +842,7 @@ class PrototypeMethod(MultiMethod):
         diag_print("selection clusters"+str(selclusters), "PrototypeMethod.multi_execute")
         diag_print("enabledvar"+str(enabledvar), "PrototypeMethod.multi_execute")
         # get confs/values
-        enabledval = inmap[enabledvar] 
+        enabledval = inmap[enabledvar]
         inconf = inmap[incluster]
         selmap = {}
         for cluster in selclusters:
@@ -869,7 +871,7 @@ class PrototypeMethod(MultiMethod):
             else:
                 return []
         else:
-            return [inconf]    
+            return [inconf]
 
     def __str__(self):
         return "PrototypeMethod#%d(%s->%s)"%(id(self),str(self._inputs[0]), str(self._outputs[0]))
@@ -893,10 +895,10 @@ class SelectionMethod(MultiMethod):
 
     def iter_constraints(self):
         return iter(self._constraints)
-    
+
     def multi_execute(self, inmap):
         diag_print("SelectionMethod.multi_execute called","SelectionMethod.multi_execute")
-        incluster = self._inputs[0] 
+        incluster = self._inputs[0]
         inconf = inmap[incluster]
         diag_print("input configuration = "+str(inconf), "SelectionMethod.multi_execute")
         sat = True
@@ -911,23 +913,23 @@ class SelectionMethod(MultiMethod):
         else:
             return []
 
-      
+
     def __str__(self):
         return "SelectionMethod#%d(%s & %s ->%s)"%(id(self),str(self._inputs[0]), str(self._constraints), str(self._outputs[0]))
 
 # --------------------------------------
 # helper functions for pattern matching
 # --------------------------------------
-   
+
 def pattern2graph(pattern):
-    """Convert a pattern to a pattern graph, used before graph based matching.  
+    """Convert a pattern to a pattern graph, used before graph based matching.
        The pattern is a list of tuples (pattype, patname, patvars), where
        pattype is one of "point", "distance", "rigid", "balloon" or "hedgehog"
        patname is a string, which is the name of a variable which will be associated with a cluster
        patvars is a list of strings, where each string is a variable to be associated with a point variable
-       If pattype is point or distance, then the length of the cluster is fixed to 1 or 2 points. 
-       Otherwise, clusters with any number of variables are matched. 
-       If pattype is hedgehog, then the first variable in patvars is the center variable. 
+       If pattype is point or distance, then the length of the cluster is fixed to 1 or 2 points.
+       Otherwise, clusters with any number of variables are matched.
+       If pattype is hedgehog, then the first variable in patvars is the center variable.
     """
     pgraph = Graph()
     pgraph.add_vertex("point")
