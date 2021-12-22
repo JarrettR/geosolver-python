@@ -3,7 +3,7 @@
    Updates and documentation:  http://users.rcn.com/python/download/python.htm
    Revision In Use:  'File %n, Ver %v, Date %f'                             '''
 Version = 'File MATFUNC.PY, Ver 183, Date 12-Dec-2002,14:33:42'
-# Modified by Rick van der Meiden 25-1-2007: included a makehash() and __hash__ in Table. 
+# Modified by Rick van der Meiden 25-1-2007: included a makehash() and __hash__ in Table.
 # Modified by Rick van der Meiden 20090311: added normSquared
 # Modified by Rick van der Meiden 20101102: added Vec2 and Vec3 constructor functions
 
@@ -57,6 +57,8 @@ class Table(list):
             return self.__class__( [op(self,e) for e in rhs]  )
         return self.__class__( [op(e,rhs) for e in self] )         # Matrix / Vec
     def __mul__( self, rhs ):  return self.map( operator.mul, rhs )
+    def __truediv__( self, rhs ):  return self.map( operator.truediv, rhs )
+    def __floordiv__( self, rhs ):  return self.map( operator.floordiv, rhs )
     def __div__( self, rhs ):  return self.map( operator.div, rhs )
     def __sub__( self, rhs ):  return self.map( operator.sub, rhs )
     def __add__( self, rhs ):  return self.map( operator.add, rhs )
@@ -87,8 +89,8 @@ class Table(list):
     def __eq__( self, rhs ):  return (self - rhs).forall( iszero )
 
     # by Rick van der Meiden 2007-01-25
-    # Tables and it's subclasses can now be used 
-    # in sets and dictionaries, but please be 
+    # Tables and it's subclasses can now be used
+    # in sets and dictionaries, but please be
     # careful with mutations. It is possible
     # to compute a new __hash__ by calling
     # makehash()
@@ -97,7 +99,7 @@ class Table(list):
         for var in self:
             val = (hash(val) + hash(var)) % 0xFFFFFFF
         self._hashvalue = val
-    
+
     def __hash__(self):
         return self._hashvalue
 
